@@ -25,7 +25,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px 10px 36px;
+    padding: 20px 10px 90px;
     background-image:
       radial-gradient(circle at 20% 20%, #FFE4E1 0%, transparent 40%),
       radial-gradient(circle at 80% 80%, #E0F7FA 0%, transparent 40%);
@@ -129,8 +129,8 @@
   #grid.clickable { cursor: pointer; }
 
   .cell {
-    width: clamp(30px, 5vw, 44px);
-    height: clamp(30px, 5vw, 44px);
+    width: min(44px, calc((100vw - 92px) / 10));
+    height: min(44px, calc((100vw - 92px) / 10));
     border-radius: 6px;
     background: #F5EFE6;
     border: 2px solid var(--grid-border);
@@ -149,18 +149,18 @@
   /* group cells: bg/border set inline by JS */
 
   /* reveal numbers on hover (add / rect modes) */
-  #grid:hover .cell.ca { color: rgba(255,255,255,0.75); }
-  #grid:hover .cell.cb { color: rgba(110,70,0,0.65); }
-  #grid:hover .cell.cm { color: rgba(255,255,255,0.75); }
+  #grid:hover .cell.ca, #grid.nums .cell.ca { color: rgba(255,255,255,0.75); }
+  #grid:hover .cell.cb, #grid.nums .cell.cb { color: rgba(110,70,0,0.65); }
+  #grid:hover .cell.cm, #grid.nums .cell.cm { color: rgba(255,255,255,0.75); }
 
   /* last cell: 50% bigger, bold inner ring */
   .cell.last {
     font-size: clamp(0.9rem, 1.7vw, 1.14rem);
     box-shadow: inset 0 0 0 3px rgba(255,255,255,0.65);
   }
-  #grid:hover .cell.ca.last { color: white; }
-  #grid:hover .cell.cb.last { color: rgba(90,55,0,0.95); }
-  #grid:hover .cell.cm.last { color: white; }
+  #grid:hover .cell.ca.last, #grid.nums .cell.ca.last { color: white; }
+  #grid:hover .cell.cb.last, #grid.nums .cell.cb.last { color: rgba(90,55,0,0.95); }
+  #grid:hover .cell.cm.last, #grid.nums .cell.cm.last { color: white; }
 
   /* group cells: suppress text, show tooltip on individual cell hover */
   .cell.cg {
@@ -277,12 +277,27 @@
     transition: transform 0.2s;
   }
   .sw input:checked ~ .sw-thumb { transform: translateX(24px); }
+
+  /* ── corner link to 2.0 ── */
+  .v2-link {
+    position: fixed; right: 16px; bottom: 16px; z-index: 50;
+    display: flex; align-items: center; gap: 6px;
+    padding: 12px 18px; border-radius: 50px;
+    background: var(--mul); color: white; text-decoration: none;
+    font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+    box-shadow: 0 5px 0 #2AA099;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .v2-link:hover  { transform: translateY(-2px); box-shadow: 0 7px 0 #2AA099; }
+  .v2-link:active { transform: translateY(3px);  box-shadow: 0 2px 0 #2AA099; }
+  .v2-link .sym { font-size: 1.4rem; line-height: 1; }
+  @media (max-width: 500px) { .v2-link { padding: 9px 14px; font-size: 1rem; } }
 </style>
 </head>
 <body>
 
 <h1>Add and Multiply</h1>
-<p class="subtitle">v1.2.0</p>
+<p class="subtitle">v1.3.0</p>
 
 <!-- pickers -->
 <div class="controls">
@@ -346,11 +361,13 @@
   <span class="audio-lbl">Read aloud</span>
 </div>
 
+<a class="v2-link" href="multiply2.html" title="Multiplication 2.0"><span class="sym">×</span> 2.0 →</a>
+
 <script>
 // ── state ─────────────────────────────────────────────────
 let numA = 5, numB = 8;
 let mode = 'add';          // 'add' | 'mul'
-let mulView = 'rect';      // 'rect' | 'groups-a' | 'groups-b'
+let mulView = 'rect';      // 'rect' | 'groups-a' (rows are groups) | 'groups-b' (columns are groups)
 let audioOn = false;
 let holdTimer = null, holdInterval = null;
 let floodTimers = [];
@@ -400,11 +417,10 @@ function cellData(idx) {
     return null;
   }
 
-  // groups-a / groups-b — same logic; numA & numB are already swapped for groups-b
-  const total = numA * numB;
-  if (idx >= total) return null;
-  const gIdx = Math.floor(idx / numB);
-  return { cls:'cg', groupIdx: gIdx, num: idx+1, last: idx===total-1 };
+  // groups-a: each row is a group of numB; groups-b: each column is a group of numA
+  if (r >= numA || c >= numB) return null;
+  const gIdx = mulView === 'groups-a' ? r : c;
+  return { cls:'cg', groupIdx: gIdx, num: r*numB+c+1, last: r===numA-1&&c===numB-1 };
 }
 
 // ── apply one cell ────────────────────────────────────────
@@ -428,18 +444,20 @@ function applyCell(idx) {
     cell.style.borderColor = bdr;
 
     // tooltip
-    cell.setAttribute('data-tip', `${ordinal(d.groupIdx + 1)} group of ${numB}`);
+    const size = mulView === 'groups-a' ? numB : numA;
+    cell.setAttribute('data-tip', `${ordinal(d.groupIdx + 1)} group of ${size}`);
 
-    // edge outlines — position within group (groups wrap every numB cells linearly)
-    const pos   = idx - d.groupIdx * numB;   // position within group 0..numB-1
-    const gcol  = pos % 10;                  // column within group's row
-    const grow  = Math.floor(pos / 10);      // row within group
-    const grows = Math.ceil(numB / 10);      // total rows in group
-
-    if (grow === 0)        cell.classList.add('ge-t');
-    if (grow === grows-1)  cell.classList.add('ge-b');
-    if (gcol === 0)        cell.classList.add('ge-l');
-    if (gcol === 9 || pos === numB-1) cell.classList.add('ge-r');
+    // edge outlines on the outer sides of each row / column group
+    const r = Math.floor(idx / 10), c = idx % 10;
+    if (mulView === 'groups-a') {
+      cell.classList.add('ge-t', 'ge-b');
+      if (c === 0)      cell.classList.add('ge-l');
+      if (c === numB-1) cell.classList.add('ge-r');
+    } else {
+      cell.classList.add('ge-l', 'ge-r');
+      if (r === 0)      cell.classList.add('ge-t');
+      if (r === numA-1) cell.classList.add('ge-b');
+    }
 
   } else {
     cell.textContent = d.num;
@@ -477,7 +495,7 @@ function updateUI() {
   document.getElementById('eqAns').textContent   = mode==='add' ? numA+numB : numA*numB;
 
   // grid cursor
-  gridEl.classList.toggle('clickable', mode==='mul');
+  gridEl.classList.add('clickable');
 
   // legend + hint
   const leg  = document.getElementById('legend');
@@ -487,21 +505,21 @@ function updateUI() {
     leg.innerHTML =
       `<div class="legend-item"><div class="ldot" style="background:var(--add-a)"></div>First group (${numA})</div>` +
       `<div class="legend-item"><div class="ldot" style="background:var(--add-b)"></div>Second group (${numB})</div>`;
-    hint.textContent = '';
+    hint.textContent = '👆 Tap the grid to show numbers';
   } else if (mulView === 'rect') {
     leg.innerHTML =
       `<div class="legend-item"><div class="ldot" style="background:var(--mul)"></div>${numA} rows × ${numB} cols = ${numA*numB}</div>`;
     hint.textContent = '👆 Click the grid to see groups';
   } else {
-    const count = mulView==='groups-a' ? numA : numA; // after swap, numA = # groups
+    const groups = mulView==='groups-a' ? numA : numB;
+    const size   = mulView==='groups-a' ? numB : numA;
     let swatches = '';
-    for (let g = 0; g < numA; g++) {
+    for (let g = 0; g < groups; g++) {
       swatches += `<div class="legend-item"><div class="ldot" style="background:${PAL[g%PAL.length][0]}"></div>Group ${g+1}</div>`;
     }
     leg.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">${swatches}</div>`;
-    hint.textContent = mulView==='groups-a'
-      ? `${numA} groups of ${numB} = ${numA*numB} · 👆 Click to flip`
-      : `${numA} groups of ${numB} = ${numA*numB} · 👆 Click to reset`;
+    hint.textContent = `${groups} groups of ${size} = ${numA*numB} · 👆 Click to ` +
+      (mulView==='groups-a' ? 'flip' : 'reset');
   }
 
   speak(phrase());
@@ -512,7 +530,7 @@ function phrase() {
   if (mode === 'add')          return `${numA} plus ${numB} equals ${numA+numB}`;
   if (mulView === 'rect')      return `${numA} times ${numB} equals ${numA*numB}`;
   if (mulView === 'groups-a')  return `${numA} groups of ${numB} makes ${numA*numB}`;
-  return `${numA} groups of ${numB} also makes ${numA*numB}`;
+  return `${numB} groups of ${numA} also makes ${numA*numB}`;
 }
 
 function speak(text) {
@@ -546,17 +564,19 @@ function change(which, delta) {
 
 function attachHold(btnId, which, delta) {
   const btn = document.getElementById(btnId);
+  const stop = () => { clearTimeout(holdTimer); clearInterval(holdInterval); };
   btn.addEventListener('pointerdown', e => {
     e.preventDefault();
+    stop();
     btn.setPointerCapture(e.pointerId);
     change(which, delta);
     holdTimer = setTimeout(() => {
       holdInterval = setInterval(() => change(which, delta), 250);
     }, 380);
   });
-  const stop = () => { clearTimeout(holdTimer); clearInterval(holdInterval); };
-  btn.addEventListener('pointerup',    stop);
-  btn.addEventListener('pointercancel', stop);
+  btn.addEventListener('pointerup',          stop);
+  btn.addEventListener('pointercancel',      stop);
+  btn.addEventListener('lostpointercapture', stop);
 }
 
 attachHold('btnAminus', 'a', -1);
@@ -568,6 +588,7 @@ attachHold('btnBplus',  'b',  1);
 function setMode(m) {
   if (m === mode) return;
   mode = m; mulView = 'rect';
+  gridEl.classList.remove('nums');
   document.getElementById('btnAdd').classList.toggle('active', m==='add');
   document.getElementById('btnMul').classList.toggle('active', m==='mul');
   updateUI(); flood();
@@ -575,20 +596,8 @@ function setMode(m) {
 
 // ── grid click (multiply group cycling) ──────────────────
 gridEl.addEventListener('click', () => {
-  if (mode !== 'mul') return;
-  if (mulView === 'rect') {
-    mulView = 'groups-a';
-  } else if (mulView === 'groups-a') {
-    [numA, numB] = [numB, numA];
-    document.getElementById('dispA').textContent = numA;
-    document.getElementById('dispB').textContent = numB;
-    mulView = 'groups-b';
-  } else {
-    [numA, numB] = [numB, numA];
-    document.getElementById('dispA').textContent = numA;
-    document.getElementById('dispB').textContent = numB;
-    mulView = 'rect';
-  }
+  if (mode !== 'mul') { gridEl.classList.toggle('nums'); return; }
+  mulView = { 'rect':'groups-a', 'groups-a':'groups-b', 'groups-b':'rect' }[mulView];
   updateUI(); flood();
 });
 
