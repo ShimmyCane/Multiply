@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>About Multiplication 2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFF9F0; --mul: #4ECDC4; --mul-b: #2AA099;
+    --grid-border: #E8D5C0; --text-dark: #2D2D2D;
+    --shadow: 0 4px 0 rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text-dark);
+    padding: 24px 16px 96px; line-height: 1.55;
+    background-image:
+      radial-gradient(circle at 20% 10%, #FFE4E1 0%, transparent 35%),
+      radial-gradient(circle at 80% 90%, #E0F7FA 0%, transparent 35%);
+  }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-family: 'Fredoka One', cursive; font-size: clamp(1.8rem, 5vw, 2.6rem); margin-bottom: 6px; }
+  .lede { color: #666; margin-bottom: 24px; font-size: 1.05rem; }
+  h2 { font-family: 'Fredoka One', cursive; font-size: 1.35rem; margin: 30px 0 12px; }
+
+  .card {
+    background: white; border: 3px solid var(--grid-border); border-radius: 20px;
+    box-shadow: var(--shadow); padding: 16px 18px; margin-bottom: 14px;
+  }
+  .card h3 { font-family: 'Fredoka One', cursive; font-size: 1.15rem; margin-bottom: 4px; }
+  .card h3 a { color: var(--text-dark); }
+  .card h3 a:hover { color: var(--mul-b); }
+  .card p { margin-top: 6px; }
+  .tag {
+    display: inline-block; font-family: 'Fredoka One', cursive; font-size: 0.85rem;
+    background: #E6FAF8; color: var(--mul-b); border-radius: 50px;
+    padding: 2px 10px; margin: 2px 4px 2px 0; text-decoration: none;
+  }
+  .tag:hover { background: var(--mul); color: white; }
+  .label { font-weight: 900; color: var(--mul-b); }
+  .label.liked { color: #D94F4F; }
+
+  .modes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .modes a {
+    display: block; background: white; border: 3px solid var(--grid-border); border-radius: 16px;
+    padding: 10px 12px; text-decoration: none; color: var(--text-dark); box-shadow: var(--shadow);
+  }
+  .modes a b { font-family: 'Fredoka One', cursive; font-weight: normal; display: block; font-size: 1.05rem; }
+  .modes a span { font-size: 0.88rem; color: #777; }
+  .modes a:hover { border-color: var(--mul); }
+
+  .corner { position: fixed; right: 16px; bottom: 16px; display: flex; gap: 8px; }
+  .corner a {
+    height: 48px; padding: 0 16px; display: flex; align-items: center;
+    border-radius: 50px; text-decoration: none; font-family: 'Fredoka One', cursive;
+    background: var(--mul); color: white; box-shadow: 0 5px 0 var(--mul-b);
+  }
+  .corner a.plain { background: white; color: var(--text-dark); border: 3px solid var(--grid-border); box-shadow: var(--shadow); }
+</style>
+</head>
+<body>
+<main>
+  <h1>About Multiplication 2.0</h1>
+  <p class="lede">
+    Multiplication isn't one idea. It's several pictures that all give the same answer.
+    Each view in 2.0 shows one of those pictures. You can play with it using as few words as possible,
+    and the numbers stay the same when you switch views, so you can see that 3 × 4 is 12 every way you look at it.
+  </p>
+
+  <h2>The ten views</h2>
+  <div class="modes">
+    <a href="multiply2.html#groups"><b>Groups</b><span>a bags of b, counted by skip-counting</span></a>
+    <a href="multiply2.html#array"><b>Array</b><span>rows × columns; turn it to see a×b = b×a</span></a>
+    <a href="multiply2.html#split"><b>Split</b><span>cut the rectangle: 7×8 = 7×5 + 7×3</span></a>
+    <a href="multiply2.html#jumps"><b>Jumps</b><span>hops on a number line land on the same spot</span></a>
+    <a href="multiply2.html#stretch"><b>Stretch</b><span>multiplying stretches a ruler, even by ½</span></a>
+    <a href="multiply2.html#sticks"><b>Sticks</b><span>count where lines cross (the "Japanese" method)</span></a>
+    <a href="multiply2.html#triangles"><b>Triangles</b><span>similar triangles turn 1, a and b into a×b</span></a>
+    <a href="multiply2.html#circle"><b>Circle</b><span>times tables drawn on a circle make a heart</span></a>
+    <a href="multiply2.html#dots"><b>Dots</b><span>groups of groups, down to prime factors</span></a>
+    <a href="multiply2.html#table"><b>Table</b><span>the times table is full of rectangles</span></a>
+  </div>
+
+  <h2>Where the ideas came from</h2>
+
+  <div class="card">
+    <h3><a href="https://www.mathlearningcenter.org/apps/number-pieces" target="_blank" rel="noopener">The Math Learning Center: Number Pieces</a></h3>
+    <a class="tag" href="https://www.mathlearningcenter.org/blog/array-model-multiplication-and-division" target="_blank" rel="noopener">Array model article</a>
+    <p><span class="label liked">What they do well:</span> Free virtual base-ten pieces that you build into real arrays. An edge piece works like a measuring tape, so the two sides of the array are always visible.</p>
+    <p><span class="label">What we took:</span> The <b>Array</b> and <b>Split</b> views. Each side of the rectangle is labelled with its length, and you can cut the rectangle into parts and watch the partial products add back up.</p>
+  </div>
+
+  <div class="card">
+    <h3><a href="https://mathigon.org/polypad" target="_blank" rel="noopener">Mathigon / Amplify Polypad</a></h3>
+    <p><span class="label liked">What they do well:</span> More than 50 manipulatives (number lines, number bars, dot arrangements, prime factor circles), all on one playful canvas with very little text.</p>
+    <p><span class="label">What we took:</span> The "almost no words" goal, number-line hops for <b>Jumps</b>, and the idea that dot pictures can show factors.</p>
+  </div>
+
+  <div class="card">
+    <h3><a href="https://whizz.com/en-us/blog/its-not-magic-its-math-how-the-japanese-multiplication-method-works/" target="_blank" rel="noopener">Whizz: How the Japanese multiplication method works</a></h3>
+    <a class="tag" href="https://makemathmoments.com/japanese-multiplication/" target="_blank" rel="noopener">Make Math Moments</a>
+    <a class="tag" href="https://thekidshouldseethis.com/post/drawing-lines-how-to-use-the-japanese-multiplication-trick" target="_blank" rel="noopener">The Kid Should See This</a>
+    <p><span class="label liked">What they do well:</span> They don't treat it as a magic trick. Each cluster of crossings is one partial product, and Make Math Moments links the lines back to arrays and base-ten blocks.</p>
+    <p><span class="label">What we took:</span> <b>Sticks</b> colors each cluster by place value (hundreds, tens, ones) and shows the counts under the clusters. With one digit, the crossings are just an array turned on its corner.</p>
+  </div>
+
+  <div class="card">
+    <h3><a href="https://redblobgames.com/x/1847-mathologer-modulo-circle" target="_blank" rel="noopener">Red Blob Games: Mathologer modulo circle</a></h3>
+    <a class="tag" href="https://www.youtube.com/watch?v=qhbuKbxJsk8" target="_blank" rel="noopener">Mathologer video</a>
+    <a class="tag" href="https://demonstrations.wolfram.com/ModularMultiplicationOnACircle/" target="_blank" rel="noopener">Wolfram Demonstration</a>
+    <p><span class="label liked">What they do well:</span> Burkard Polster's "Times Tables, Mandelbrot and the Heart of Mathematics" turns the 2 times table into a cardioid. Red Blob's version makes it a toy you control with just two sliders.</p>
+    <p><span class="label">What we took:</span> <b>Circle</b> keeps the two sliders (points and multiplier), adds a play button that sweeps the multiplier, and highlights one chord, 3 → 3 × m, so a child can see that each line really is a times-table fact.</p>
+  </div>
+
+  <div class="card">
+    <h3><a href="https://archives.haskell.org/projects.haskell.org/diagrams/gallery/Factorization.html" target="_blank" rel="noopener">Brent Yorgey: Factorization diagrams</a></h3>
+    <a class="tag" href="https://david-peter.de/factorization-diagrams" target="_blank" rel="noopener">Interactive version (David Peter)</a>
+    <a class="tag" href="https://mathmunch.org/2012/11/04/factorization-dance-vanishing-and-storm-infographics/" target="_blank" rel="noopener">Math Munch: Factor Conga</a>
+    <p><span class="label liked">What they do well:</span> Each number is drawn as nested rings of dots. Twelve is three groups of four, which is three groups of two groups of two. You can see a number's prime factors before anyone names them.</p>
+    <p><span class="label">What we took:</span> <b>Dots</b> starts with "a groups of b" (a ring of rings) and has a "primes" button that breaks it all the way down. The dots are colored by outer group, so you can still count the groups.</p>
+  </div>
+
+  <div class="card">
+    <h3><a href="https://jlmartin.ku.edu/courses/math410-S09/classicproblems.pdf" target="_blank" rel="noopener">University of Kansas: Classic geometry problems (PDF)</a></h3>
+    <a class="tag" href="https://ar5iv.arxiv.org/html/1301.6602" target="_blank" rel="noopener">A Geometric Approach to Defining Multiplication</a>
+    <p><span class="label liked">What they do well:</span> They show the classic straightedge construction. With a unit length 1, two lengths a and b, and one pair of parallel lines, you get a length of exactly a×b. No areas or counting needed.</p>
+    <p><span class="label">What we took:</span> <b>Triangles</b> lets you drag a and b, even to fractions. The play button slides the parallel line from 1 out to b, so you watch the small triangle grow into the big one.</p>
+  </div>
+
+  <div class="card">
+    <h3><a href="https://www.thenational.academy/teachers/lessons/multiplication-as-scaling-6cvp2d" target="_blank" rel="noopener">Oak National Academy: Multiplication as scaling</a></h3>
+    <p><span class="label liked">What they do well:</span> They describe multiplying as stretching by a scale factor. That's the picture that still works for ½ or 1½, when "groups of" stops making sense.</p>
+    <p><span class="label">What we took:</span> <b>Stretch</b> has two rulers joined by fan lines. Drag the bottom ruler and watch every number stretch at once. The orange line shows where 1 goes, because the multiplier is what 1 turns into.</p>
+  </div>
+
+  <h2>How we put it together</h2>
+  <div class="card">
+    <p>Each view answers the same question: <i>what does a × b look like?</i> We kept a few rules:</p>
+    <p>🎨 <b>Same colors everywhere.</b> The first number is red and the second is blue, in every view.</p>
+    <p>👆 <b>Touch first.</b> You tap, drag or press ▶. You never have to read instructions.</p>
+    <p>🔁 <b>Same answer, different picture.</b> Your numbers carry over when you switch views, so the same fact appears ten different ways.</p>
+    <p>🧱 <b>Easy to grow.</b> Each view is one small, separate block of code in <code>multiply2.html</code>, so a new picture can be added without touching the others.</p>
+  </div>
+</main>
+
+<div class="corner">
+  <a class="plain" href="index.html">1.0</a>
+  <a href="multiply2.html">× 2.0</a>
+</div>
+</body>
+</html>

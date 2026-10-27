@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Multiplication 2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFF9F0;
+    --mul: #4ECDC4; --mul-b: #2AA099;
+    --grid-border: #E8D5C0;
+    --text-dark: #2D2D2D;
+    --soft: #F5EFE6;
+    --shadow: 0 4px 0 rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text-dark);
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 14px 16px 96px;
+    background-image:
+      radial-gradient(circle at 20% 20%, #FFE4E1 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, #E0F7FA 0%, transparent 40%);
+    user-select: none; -webkit-user-select: none;
+  }
+
+  /* ── header ── */
+  .mode-pill {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Fredoka One', cursive; font-size: 1.35rem;
+    background: white; border: 3px solid var(--grid-border);
+    border-radius: 50px; padding: 4px 18px 4px 6px;
+    box-shadow: var(--shadow); margin-bottom: 12px;
+  }
+  .mode-pill svg { width: 36px; height: 36px; }
+
+  .top {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .top.hide-pickers .num-control, .top.hide-pickers .sym-x { display: none; }
+  .num-control {
+    display: flex; align-items: center;
+    background: white; border-radius: 50px;
+    box-shadow: var(--shadow); overflow: hidden;
+    border: 3px solid var(--grid-border);
+  }
+  .num-btn {
+    width: 42px; height: 42px;
+    font-size: 1.4rem; border: none; background: transparent;
+    cursor: pointer; color: var(--text-dark);
+    font-family: 'Fredoka One', cursive; line-height: 1;
+    touch-action: none;
+  }
+  .num-btn:hover  { background: #F0F0F0; }
+  .num-btn:active { background: #E4E4E4; }
+  .num-display {
+    font-family: 'Fredoka One', cursive; font-size: 1.6rem;
+    min-width: 50px; text-align: center;
+    transition: transform 0.08s;
+  }
+  .num-display.bump { transform: scale(1.3); }
+  #dispA { color: #E05555; }
+  #dispB { color: #2A70D0; }
+  @media (max-width: 480px) {
+    .top { gap: 6px; }
+    .num-btn { width: 34px; height: 40px; }
+    .num-display { min-width: 36px; font-size: 1.4rem; }
+    .sym-x, .sym-eq { font-size: 1.4rem !important; }
+    .ans { font-size: 1.6rem; min-width: 0; }
+  }
+  .sym-x, .sym-eq { font-family: 'Fredoka One', cursive; font-size: 1.8rem; color: #CCC; }
+  .ans {
+    font-family: 'Fredoka One', cursive; font-size: 1.9rem; color: var(--mul-b);
+    min-width: 48px; text-align: center;
+  }
+
+  /* ── stage ── */
+  .stage-wrap {
+    width: 100%; max-width: 780px;
+    background: white; border-radius: 22px;
+    border: 3px solid var(--grid-border);
+    box-shadow: 0 8px 0 rgba(0,0,0,0.10);
+    padding: 6px;
+  }
+  #stage { width: 100%; height: auto; display: block; touch-action: none; overflow: hidden; }
+  #stage text { font-family: 'Fredoka One', cursive; }
+
+  .eq {
+    margin-top: 14px; min-height: 2.2em;
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.1rem, 3.6vw, 1.7rem);
+    text-align: center; color: var(--text-dark);
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px;
+  }
+  .eq .o { color: #BBB; }
+  .eq .r { color: var(--mul-b); }
+
+  /* ── mode tools ── */
+  .tools {
+    margin-top: 10px; display: flex; gap: 10px;
+    flex-wrap: wrap; justify-content: center; align-items: center;
+  }
+  .tool {
+    font-family: 'Fredoka One', cursive; font-size: 1.15rem;
+    min-width: 52px; height: 48px; padding: 0 16px;
+    border-radius: 16px; border: 3px solid var(--grid-border);
+    background: white; color: var(--text-dark); cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.08s, background 0.15s, color 0.15s;
+  }
+  .tool:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.12); }
+  .tool.on { background: var(--mul); color: white; border-color: var(--mul-b); }
+  .slider {
+    display: flex; align-items: center; gap: 8px;
+    background: white; border: 3px solid var(--grid-border);
+    border-radius: 16px; padding: 6px 14px; box-shadow: var(--shadow);
+    font-family: 'Fredoka One', cursive; font-size: 1.05rem;
+  }
+  .slider input { width: min(180px, 40vw); accent-color: var(--mul); }
+  .slider output { min-width: 3.2em; text-align: right; }
+
+  /* ── svg animation helpers ── */
+  .fade { transition: opacity 0.35s; }
+  .dim { opacity: 0.15; }
+  .pop { animation: pop 0.35s ease-out both; transform-box: fill-box; transform-origin: center; }
+  @keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .pulse { animation: pulse 0.45s ease-out; transform-box: fill-box; transform-origin: center; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 45% { transform: scale(1.15); } }
+  .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 0.5s ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .spin { transition: transform 0.9s cubic-bezier(.5,-0.3,.5,1.3); }
+  .knob { cursor: grab; }
+  .knob:active { cursor: grabbing; }
+  .cell-hit { cursor: pointer; }
+
+  /* ── floating buttons ── */
+  .fab {
+    position: fixed; bottom: 16px; z-index: 60;
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 3px solid var(--mul-b); background: var(--mul);
+    box-shadow: 0 5px 0 var(--mul-b);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform 0.15s;
+  }
+  .fab:active { transform: translateY(3px); }
+  .fab svg { width: 30px; height: 30px; }
+  #menuBtn { left: 16px; }
+  #menuBtn.open svg { transform: rotate(45deg); }
+  #menuBtn svg { transition: transform 0.25s; }
+
+  .corner {
+    position: fixed; right: 16px; bottom: 16px; z-index: 50;
+    display: flex; gap: 8px;
+  }
+  .corner a {
+    height: 48px; min-width: 48px; padding: 0 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50px; text-decoration: none;
+    font-family: 'Fredoka One', cursive; font-size: 1.05rem;
+    background: white; color: var(--text-dark);
+    border: 3px solid var(--grid-border); box-shadow: var(--shadow);
+  }
+  .corner a:active { transform: translateY(3px); }
+
+  .menu {
+    position: fixed; left: 16px; bottom: 90px; z-index: 59;
+    width: min(340px, calc(100vw - 32px));
+    max-height: calc(100vh - 120px); overflow-y: auto;
+    background: white; border-radius: 22px;
+    border: 3px solid var(--grid-border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    padding: 12px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    transform-origin: bottom left;
+    transform: scale(0.6); opacity: 0; pointer-events: none;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .menu.open { transform: scale(1); opacity: 1; pointer-events: auto; }
+  .tile {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px; border-radius: 14px;
+    border: 3px solid transparent; background: var(--soft);
+    font-family: 'Fredoka One', cursive; font-size: 1rem;
+    color: var(--text-dark); cursor: pointer; text-align: left;
+  }
+  .tile svg { width: 40px; height: 40px; flex-shrink: 0; }
+  .tile:hover { border-color: var(--grid-border); }
+  .tile.active { border-color: var(--mul); background: #E6FAF8; }
+</style>
+</head>
+<body>
+
+<div class="mode-pill" id="modePill"></div>
+
+<div class="top" id="top">
+  <div class="num-control">
+    <button class="num-btn" id="btnAminus" aria-label="first number down">−</button>
+    <span class="num-display" id="dispA">3</span>
+    <button class="num-btn" id="btnAplus" aria-label="first number up">+</button>
+  </div>
+  <span class="sym-x">×</span>
+  <div class="num-control">
+    <button class="num-btn" id="btnBminus" aria-label="second number down">−</button>
+    <span class="num-display" id="dispB">4</span>
+    <button class="num-btn" id="btnBplus" aria-label="second number up">+</button>
+  </div>
+  <span class="sym-eq">=</span>
+  <span class="ans" id="ans">12</span>
+</div>
+
+<div class="stage-wrap"><svg id="stage" viewBox="0 0 600 420"></svg></div>
+<div class="eq" id="eq"></div>
+<div class="tools" id="tools"></div>
+
+<button class="fab" id="menuBtn" aria-label="ways to see multiplication">
+  <svg viewBox="0 0 30 30"><g fill="white">
+    <rect x="3" y="3" width="10" height="10" rx="3"/><rect x="17" y="3" width="10" height="10" rx="3"/>
+    <rect x="3" y="17" width="10" height="10" rx="3"/><rect x="17" y="17" width="10" height="10" rx="3"/>
+  </g></svg>
+</button>
+<nav class="menu" id="menu"></nav>
+
+<div class="corner">
+  <a href="about.html" title="About">?</a>
+  <a href="index.html" title="Back to Add and Multiply">1.0</a>
+</div>
+
+<script>
+// ── palette (same 10 colors as 1.0) ───────────────────────
+const PAL = ['#FF6B6B','#FFD166','#4ECDC4','#A78BFA','#F97316','#34D399','#60A5FA','#F472B6','#FACC15','#86EFAC'];
+const DARK = ['#D94F4F','#C9A010','#2FAF9F','#7050D0','#C05808','#18A06A','#2A70D0','#C03880','#C09000','#3A9A60'];
+const COL_A = '#FF6B6B', COL_B = '#60A5FA', COL_M = '#4ECDC4';
+
+const NS = 'http://www.w3.org/2000/svg';
+const stage = document.getElementById('stage');
+const W = 600, H = 420;
+
+function el(tag, attrs = {}, parent = stage) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(x, y, s, attrs = {}, parent = stage) {
+  const t = el('text', { x, y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+                         'font-size': 22, fill: '#2D2D2D', ...attrs }, parent);
+  t.textContent = s;
+  return t;
+}
+function svgPoint(e) {
+  const p = stage.createSVGPoint();
+  p.x = e.clientX; p.y = e.clientY;
+  return p.matrixTransform(stage.getScreenCTM().inverse());
+}
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const FR = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
+function fmt(x) {
+  x = Math.round(x * 100) / 100;
+  if (Number.isInteger(x)) return String(x);
+  const w = Math.floor(x), f = Math.round((x - w) * 100) / 100;
+  if (FR[f]) return (w || '') + FR[f];
+  return String(x);
+}
+
+// ── state ─────────────────────────────────────────────────
+let A = 3, B = 4;
+let mode = null;
+let timers = [], raf = 0;
+function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+function stopAnims() { timers.forEach(clearTimeout); timers = []; cancelAnimationFrame(raf); }
+function clear() { stopAnims(); stage.innerHTML = ''; }
+
+// drag handling: a mode sets `drag` to a move handler on pointerdown
+let drag = null;
+stage.addEventListener('pointermove', e => { if (drag) drag(svgPoint(e)); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t =>
+  stage.addEventListener(t, () => { if (drag) { drag = null; mode.draw(); } }));
+function knob(x, y, color, onMove, r = 16) {
+  const k = el('circle', { cx: x, cy: y, r, fill: 'white', stroke: color, 'stroke-width': 5, class: 'knob' });
+  k.addEventListener('pointerdown', e => { e.preventDefault(); stage.setPointerCapture(e.pointerId); drag = onMove; });
+  return k;
+}
+
+// ── tools row helpers ─────────────────────────────────────
+const toolsEl = document.getElementById('tools');
+function tool(label, onClick, on = false, title = '') {
+  const b = document.createElement('button');
+  b.className = 'tool' + (on ? ' on' : '');
+  b.textContent = label;
+  if (title) b.title = title;
+  b.addEventListener('click', onClick);
+  toolsEl.appendChild(b);
+  return b;
+}
+function slider(label, min, max, step, value, onInput, show = v => v) {
+  const w = document.createElement('label');
+  w.className = 'slider';
+  w.innerHTML = `<span>${label}</span><input type="range" min="${min}" max="${max}" step="${step}" value="${value}"><output>${show(value)}</output>`;
+  const inp = w.querySelector('input'), out = w.querySelector('output');
+  inp.addEventListener('input', () => { out.textContent = show(+inp.value); onInput(+inp.value); });
+  toolsEl.appendChild(w);
+  return { set(v) { inp.value = v; out.textContent = show(v); } };
+}
+
+function eq(html) { document.getElementById('eq').innerHTML = html; }
+const X = '<span class="o">×</span>', EQ = '<span class="o">=</span>', PLUS = '<span class="o">+</span>';
+function R(v) { return `<span class="r">${v}</span>`; }
+function cA(v) { return `<span style="color:${COL_A}">${v}</span>`; }
+function cB(v) { return `<span style="color:${COL_B}">${v}</span>`; }
+
+// ── MODES ─────────────────────────────────────────────────
+const MODES = {};
+
+// 1. equal groups ─────────────────────────────────────────
+MODES.groups = {
+  name: 'Groups',
+  icon: `<circle cx="11" cy="14" r="8" fill="#FFD6D6" stroke="#FF6B6B" stroke-width="2"/><circle cx="29" cy="14" r="8" fill="#FFF0C8" stroke="#FFD166" stroke-width="2"/><circle cx="20" cy="29" r="8" fill="#D3F4F1" stroke="#4ECDC4" stroke-width="2"/>
+         <g fill="#FF6B6B"><circle cx="8" cy="14" r="2"/><circle cx="14" cy="14" r="2"/></g><g fill="#E0A820"><circle cx="26" cy="14" r="2"/><circle cx="32" cy="14" r="2"/></g><g fill="#2FAF9F"><circle cx="17" cy="29" r="2"/><circle cx="23" cy="29" r="2"/></g>`,
+  a: [1, 10], b: [1, 10],
+  draw() {
+    clear();
+    const n = A, k = B;
+    const cols = n <= 5 ? n : Math.ceil(n / 2), rows = Math.ceil(n / cols);
+    const cw = 580 / cols, ch = 320 / rows;
+    const size = Math.min(cw, ch, 130) - 12;
+    this.bags = []; this.chips = [];
+    for (let i = 0; i < n; i++) {
+      const cx = 10 + cw * (i % cols + 0.5), cy = 10 + ch * (Math.floor(i / cols) + 0.5);
+      const outer = el('g', { transform: `translate(${cx},${cy})`, class: 'fade cell-hit' });
+      const g = el('g', {}, outer);
+      el('circle', { r: size / 2, fill: PAL[i], 'fill-opacity': 0.2, stroke: PAL[i], 'stroke-width': 4 }, g);
+      const dc = Math.ceil(Math.sqrt(k)), dr = Math.ceil(k / dc);
+      const sp = size * 0.62 / Math.max(dc, dr, 1.6);
+      for (let j = 0; j < k; j++) {
+        const row = Math.floor(j / dc), inRow = row === dr - 1 ? k - row * dc : dc;
+        el('circle', { cx: (j % dc - (inRow - 1) / 2) * sp, cy: (row - (dr - 1) / 2) * sp,
+                       r: sp * 0.36, fill: DARK[i] }, g);
+      }
+      outer.addEventListener('click', () => { stopAnims(); this.light(i); });
+      this.bags.push({ outer, g });
+    }
+    const chipW = 580 / n;
+    for (let i = 0; i < n; i++) {
+      const g = el('g', { class: 'fade' });
+      el('rect', { x: 10 + chipW * i + 3, y: 352, width: chipW - 6, height: 52, rx: 12, fill: PAL[i] }, g);
+      txt(10 + chipW * (i + 0.5), 378, (i + 1) * k, { fill: 'white', 'font-size': Math.min(26, chipW * 0.42) }, g);
+      this.chips.push(g);
+    }
+    eq(`${cA(n)} groups of ${cB(k)} ${EQ} ${R(n * k)}`);
+  },
+  light(upTo) {
+    this.bags.forEach((b, i) => b.outer.classList.toggle('dim', i > upTo));
+    this.chips.forEach((c, i) => c.classList.toggle('dim', i > upTo));
+    const b = this.bags[upTo].g;
+    b.classList.remove('pulse'); void b.getBBox(); b.classList.add('pulse');
+    eq(`${cA(upTo + 1)} groups of ${cB(B)} ${EQ} ${R((upTo + 1) * B)}`);
+  },
+  play() {
+    this.draw();
+    this.bags.forEach(b => b.outer.classList.add('dim'));
+    this.chips.forEach(c => c.classList.add('dim'));
+    for (let i = 0; i < A; i++) later(() => this.light(i), 400 + i * 650);
+  },
+  tools() { tool('▶', () => this.play(), false, 'count the groups'); },
+};
+
+// 2. array + turn ─────────────────────────────────────────
+MODES.array = {
+  name: 'Array',
+  icon: `<g fill="#4ECDC4">${[0,1,2,3].map(r => [0,1,2].map(c => `<circle cx="${9+c*11}" cy="${6+r*9.5}" r="3.6"/>`).join('')).join('')}</g>`,
+  a: [1, 12], b: [1, 12],
+  rot: false, color: 'rows',
+  draw() {
+    clear();
+    const u = Math.min(330 / Math.max(A, B), 48);
+    const outer = el('g', { transform: 'translate(300,210)' });
+    const g = el('g', { class: 'spin' }, outer);
+    g.style.transform = this.rot ? 'rotate(90deg)' : 'rotate(0deg)';
+    for (let r = 0; r < A; r++) for (let c = 0; c < B; c++) {
+      const ci = this.color === 'rows' ? r : this.color === 'cols' ? c : -1;
+      el('circle', { cx: (c - (B - 1) / 2) * u, cy: (r - (A - 1) / 2) * u, r: u * 0.36,
+                     fill: ci < 0 ? COL_M : PAL[ci % 10], class: 'pop',
+                     style: `animation-delay:${(r + c) * 25}ms` }, g);
+    }
+    this.g = g; this.u = u;
+    this.labels();
+  },
+  labels() {
+    if (this.lab) this.lab.remove();
+    const rowsN = this.rot ? B : A, colsN = this.rot ? A : B, u = this.u;
+    const lab = this.lab = el('g', { class: 'pop' });
+    const top = 210 - rowsN * u / 2 - 14, left = 300 - colsN * u / 2 - 14;
+    el('line', { x1: 300 - colsN * u / 2 + 6, y1: top, x2: 300 + colsN * u / 2 - 6, y2: top,
+                 stroke: COL_B, 'stroke-width': 4, 'stroke-linecap': 'round' }, lab);
+    txt(300, top - 18, colsN, { fill: COL_B, 'font-size': 26 }, lab);
+    el('line', { x1: left, y1: 210 - rowsN * u / 2 + 6, x2: left, y2: 210 + rowsN * u / 2 - 6,
+                 stroke: COL_A, 'stroke-width': 4, 'stroke-linecap': 'round' }, lab);
+    txt(left - 20, 210, rowsN, { fill: COL_A, 'font-size': 26 }, lab);
+    const r = this.rot ? B : A, c = this.rot ? A : B;
+    eq(this.rot
+      ? `${cA(A)} ${X} ${cB(B)} ${EQ} ${cB(B)} ${X} ${cA(A)} ${EQ} ${R(A * B)}`
+      : `${cA(r)} ${X} ${cB(c)} ${EQ} ${R(A * B)}`);
+  },
+  turn() {
+    this.rot = !this.rot;
+    this.lab.remove(); this.lab = null;
+    this.g.style.transform = this.rot ? 'rotate(90deg)' : 'rotate(0deg)';
+    later(() => this.labels(), 900);
+  },
+  tools() {
+    tool('⟳', () => this.turn(), false, 'turn');
+    const opts = [['≡', 'rows'], ['⦀', 'cols'], ['●', 'none']];
+    opts.forEach(([l, v]) => tool(l, () => { this.color = v; refreshTools(); this.draw(); }, this.color === v));
+  },
+  enter() { this.rot = false; },
+};
+
+// 3. area split (distributive) ────────────────────────────
+MODES.split = {
+  name: 'Split',
+  icon: `<rect x="4" y="8" width="20" height="24" fill="#FF6B6B"/><rect x="24" y="8" width="12" height="24" fill="#FFD166"/><rect x="4" y="8" width="32" height="24" fill="none" stroke="#2D2D2D" stroke-width="2"/>`,
+  a: [1, 12], b: [1, 12],
+  sx: 2, sy: 0,
+  reset() { this.sx = B > 5 ? 5 : Math.floor(B / 2); this.sy = 0; },
+  enter() { this.reset(); },
+  onNums() { this.reset(); },
+  draw() {
+    clear();
+    const u = Math.min(480 / B, 300 / A, 44);
+    const x0 = 315 - B * u / 2, y0 = 60 + (310 - A * u) / 2;
+    const xs = [0, this.sx, B].filter((v, i, a) => i === 0 || v !== a[i - 1]);
+    const ys = [0, this.sy, A].filter((v, i, a) => i === 0 || v !== a[i - 1]);
+    const parts = [];
+    for (let i = 0; i < ys.length - 1; i++) for (let j = 0; j < xs.length - 1; j++) {
+      const h = ys[i + 1] - ys[i], w = xs[j + 1] - xs[j];
+      const ci = [0, 1, 6, 5][i * 2 + j];
+      const rx = x0 + xs[j] * u, ry = y0 + ys[i] * u;
+      el('rect', { x: rx, y: ry, width: w * u, height: h * u, fill: PAL[ci] });
+      for (let c = 1; c < w; c++) el('line', { x1: rx + c * u, y1: ry, x2: rx + c * u, y2: ry + h * u, stroke: 'white', 'stroke-opacity': 0.45, 'stroke-width': 1.5 });
+      for (let r = 1; r < h; r++) el('line', { x1: rx, y1: ry + r * u, x2: rx + w * u, y2: ry + r * u, stroke: 'white', 'stroke-opacity': 0.45, 'stroke-width': 1.5 });
+      const fs = Math.min(30, w * u * 0.38, h * u * 0.55);
+      if (fs >= 9) txt(rx + w * u / 2, ry + h * u / 2, w * h, { fill: 'white', 'font-size': fs, stroke: DARK[ci], 'stroke-width': 3, 'paint-order': 'stroke' });
+      parts.push({ h, w, ci });
+    }
+    el('rect', { x: x0, y: y0, width: B * u, height: A * u, fill: 'none', stroke: '#2D2D2D', 'stroke-width': 3 });
+    // side lengths
+    for (let j = 0; j < xs.length - 1; j++) txt(x0 + (xs[j] + xs[j + 1]) / 2 * u, y0 - 18, xs[j + 1] - xs[j], { fill: COL_B, 'font-size': 24 });
+    for (let i = 0; i < ys.length - 1; i++) txt(x0 - 22, y0 + (ys[i] + ys[i + 1]) / 2 * u, ys[i + 1] - ys[i], { fill: COL_A, 'font-size': 24 });
+    // split handles
+    const vx = x0 + this.sx * u, hy = y0 + this.sy * u;
+    el('line', { x1: vx, y1: y0 - 4, x2: vx, y2: y0 + A * u + 4, stroke: '#2D2D2D', 'stroke-width': 3, 'stroke-dasharray': '6 5' });
+    el('line', { x1: x0 - 4, y1: hy, x2: x0 + B * u + 4, y2: hy, stroke: '#2D2D2D', 'stroke-width': 3, 'stroke-dasharray': '6 5' });
+    knob(vx, y0 + A * u + 22, '#2A70D0', p => { const v = clamp(Math.round((p.x - x0) / u), 0, B); if (v !== this.sx) { this.sx = v; this.draw(); } });
+    knob(x0 + B * u + 22, hy, '#D94F4F', p => { const v = clamp(Math.round((p.y - y0) / u), 0, A); if (v !== this.sy) { this.sy = v; this.draw(); } });
+    const sum = parts.map(p => `<span style="color:${DARK[p.ci]}">${p.w * p.h}</span>`).join(` ${PLUS} `);
+    eq(parts.length > 1 ? `${sum} ${EQ} ${R(A * B)}` : `${cA(A)} ${X} ${cB(B)} ${EQ} ${R(A * B)}`);
+  },
+  tools() { tool('↺', () => { this.reset(); this.draw(); }, false, 'reset split'); },
+};
+
+// 4. number-line jumps ────────────────────────────────────
+MODES.jumps = {
+  name: 'Jumps',
+  icon: `<line x1="3" y1="30" x2="37" y2="30" stroke="#2D2D2D" stroke-width="2"/><path d="M4 30 Q10 12 16 30 Q22 12 28 30 Q34 12 37 26" fill="none" stroke="#FF6B6B" stroke-width="3"/>`,
+  a: [1, 10], b: [1, 10],
+  draw(animated = false) {
+    clear();
+    const total = A * B, x0 = 30, L = 540, px = L / total;
+    const lines = [
+      { y: 170, count: A, size: B, color: COL_A, dark: '#D94F4F', who: '🐸' },
+      { y: 360, count: B, size: A, color: COL_B, dark: '#2A70D0', who: '🐰' },
+    ];
+    lines.forEach(ln => {
+      el('line', { x1: x0 - 10, y1: ln.y, x2: x0 + L + 14, y2: ln.y, stroke: '#2D2D2D', 'stroke-width': 3, 'stroke-linecap': 'round' });
+      const tickEvery = px >= 5 ? 1 : 5;
+      for (let t = 0; t <= total; t += tickEvery)
+        el('line', { x1: x0 + t * px, y1: ln.y - 5, x2: x0 + t * px, y2: ln.y + 5, stroke: '#BBB', 'stroke-width': 2 });
+      txt(x0, ln.y + 22, 0, { 'font-size': 16, fill: '#AAA' });
+      ln.arcs = []; ln.labels = [];
+      for (let i = 0; i < ln.count; i++) {
+        const xa = x0 + i * ln.size * px, xb = x0 + (i + 1) * ln.size * px;
+        const h = Math.min(110, ln.size * px * 0.55 + 12);
+        const p = el('path', { d: `M${xa} ${ln.y} Q${(xa + xb) / 2} ${ln.y - h * 2} ${xb} ${ln.y}`, fill: 'none',
+                               stroke: ln.color, 'stroke-width': 4, 'stroke-linecap': 'round', pathLength: 1 });
+        if (animated) p.style.opacity = 0;
+        const lbl = txt(xb, ln.y + 24, (i + 1) * ln.size, { fill: ln.dark, 'font-size': Math.min(20, ln.size * px * 0.7 + 8) });
+        if (animated) lbl.style.opacity = 0;
+        ln.arcs.push({ p, xa, xb, h }); ln.labels.push(lbl);
+      }
+      ln.critter = txt(animated ? x0 : x0 + total * px, ln.y - 22, ln.who, { 'font-size': 34 });
+    });
+    if (animated) {
+      let t0 = 300;
+      lines.forEach(ln => {
+        ln.arcs.forEach((a, i) => {
+          later(() => {
+            a.p.style.opacity = 1; a.p.classList.add('draw');
+            this.hop(ln.critter, a, ln.y);
+            later(() => { ln.labels[i].style.opacity = 1; ln.labels[i].classList.add('pop'); }, 420);
+          }, t0);
+          t0 += Math.max(220, 2400 / ln.count);
+        });
+        t0 += 500;
+      });
+    }
+    eq(`${cA(A)} jumps of ${cB(B)} ${EQ} ${cB(B)} jumps of ${cA(A)} ${EQ} ${R(total)}`);
+  },
+  hop(t, a, y) {
+    const start = performance.now(), dur = 420;
+    const step = now => {
+      const s = Math.min(1, (now - start) / dur);
+      const x = a.xa + (a.xb - a.xa) * s, yy = y - 22 - a.h * 4 * s * (1 - s);
+      t.setAttribute('x', x); t.setAttribute('y', yy);
+      if (s < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  },
+  tools() { tool('▶', () => this.draw(true), false, 'hop'); },
+};
+
+// 5. stretch (scaling) ────────────────────────────────────
+MODES.stretch = {
+  name: 'Stretch',
+  icon: `<rect x="4" y="7" width="12" height="7" rx="2" fill="#FFD166"/><rect x="4" y="27" width="32" height="7" rx="2" fill="#4ECDC4"/><g stroke="#BBB" stroke-width="1.5"><line x1="4" y1="14" x2="4" y2="27"/><line x1="10" y1="14" x2="20" y2="27"/><line x1="16" y1="14" x2="36" y2="27"/></g>`,
+  a: [0, 4], b: [1, 8], aStep: 0.5,
+  draw() {
+    clear();
+    const k = A, x0 = 34, u = 532 / (4 * B);
+    const yT = 80, yB = 280, bh = 34;
+    // background scale for the stretched ruler
+    const every = u >= 13 ? 1 : u >= 5 ? 2 : 5;
+    for (let t = 0; t <= 4 * B; t++) {
+      const big = t % every === 0;
+      el('line', { x1: x0 + t * u, y1: yB + bh, x2: x0 + t * u, y2: yB + bh + (big ? 14 : 7), stroke: '#CCC', 'stroke-width': 2 });
+      if (big) txt(x0 + t * u, yB + bh + 30, t, { 'font-size': 15, fill: '#BBB' });
+    }
+    // fan lines
+    for (let n = 0; n <= B; n++)
+      el('line', { x1: x0 + n * u, y1: yT + bh, x2: x0 + k * n * u, y2: yB,
+                   stroke: n === 1 ? '#F97316' : '#DDD', 'stroke-width': n === 1 ? 3 : 2 });
+    // rulers
+    el('rect', { x: x0, y: yT, width: B * u, height: bh, rx: 8, fill: PAL[1] });
+    if (k > 0) el('rect', { x: x0, y: yB, width: k * B * u, height: bh, rx: 8, fill: PAL[2] });
+    for (let n = 1; n < B; n++) {
+      el('line', { x1: x0 + n * u, y1: yT, x2: x0 + n * u, y2: yT + bh, stroke: 'white', 'stroke-width': 2 });
+      if (k > 0) el('line', { x1: x0 + k * n * u, y1: yB, x2: x0 + k * n * u, y2: yB + bh, stroke: 'white', 'stroke-width': 2 });
+    }
+    if (B > 1) txt(x0 + u, yT - 18, 1, { fill: '#F97316', 'font-size': 20 });
+    txt(x0 + B * u, yT - 18, B, { fill: COL_B, 'font-size': 26 });
+    if (k > 0) txt(x0 + k * u, yB - 20, fmt(k), { fill: COL_A, 'font-size': 22 });
+    if (k !== 1 && B > 1) txt(x0 + k * B * u, yB - 20, fmt(k * B), { fill: '#2FAF9F', 'font-size': 26 });
+    knob(x0 + k * B * u, yB + bh / 2, '#2FAF9F', p => {
+      const v = clamp(Math.round((p.x - x0) / (B * u) * 4) / 4, 0, 4);
+      if (v !== A) { A = v; showNums(); this.draw(); }
+    }, 18);
+    eq(`${cA(fmt(k))} ${X} ${cB(B)} ${EQ} ${R(fmt(k * B))}`);
+  },
+  tools() {
+    [0.5, 1, 1.5, 2, 3].forEach(v => tool('×' + fmt(v), () => { A = v; showNums(); this.draw(); }));
+  },
+};
+
+// 6. crossing sticks (line multiplication) ────────────────
+MODES.sticks = {
+  name: 'Sticks',
+  icon: `<g stroke-width="3" stroke-linecap="round"><line x1="6" y1="24" x2="22" y2="8" stroke="#FF6B6B"/><line x1="11" y1="29" x2="27" y2="13" stroke="#FF6B6B"/><line x1="16" y1="34" x2="32" y2="18" stroke="#FF6B6B"/><line x1="8" y1="11" x2="30" y2="33" stroke="#60A5FA"/><line x1="14" y1="5" x2="36" y2="27" stroke="#60A5FA"/></g>`,
+  two: false,
+  get a() { return this.two ? [11, 99] : [1, 9]; },
+  get b() { return this.two ? [11, 99] : [1, 9]; },
+  step(v, d, [lo, hi]) {
+    if (!this.two) return clamp(v + d, lo, hi);
+    if (d === 0) { if (v % 10) return clamp(v, lo, hi); d = 1; }   // digits must not be 0
+    do { v += d; } while (v % 10 === 0 && v > lo && v < hi);
+    return clamp(v, lo, hi);
+  },
+  draw() {
+    clear();
+    const dA = this.two ? [Math.floor(A / 10), A % 10] : [A];
+    const dB = this.two ? [Math.floor(B / 10), B % 10] : [B];
+    const pos = digs => { const out = []; let p = 0;
+      digs.forEach((d, gi) => { for (let i = 0; i < d; i++) { out.push({ p, gi }); p += 1; } p += 1.6; });
+      const mid = (out[0].p + out[out.length - 1].p) / 2; out.forEach(o => o.p -= mid); return out; };
+    const ys = pos(dA), xs = pos(dB);
+    const ext = 1.1;
+    const xMin = xs[0].p - ext, xMax = xs[xs.length - 1].p + ext, yMin = ys[0].p - ext, yMax = ys[ys.length - 1].p + ext;
+    const c = Math.SQRT1_2;
+    const rot = (x, y) => [(x + y) * c, (y - x) * c];
+    const span = Math.max((xMax - xMin + yMax - yMin) * c, 1);
+    const s = Math.min(560 / span, 300 / span, 70);
+    const P = (x, y) => { const [rx, ry] = rot(x, y); return [300 + rx * s, 185 + ry * s]; };
+    const lineCols = this.two ? [[COL_A, '#F97316'], [COL_B, '#A78BFA']] : [[COL_A], [COL_B]];
+    let delay = 0;
+    ys.forEach(o => { const [x1, y1] = P(xMin, o.p), [x2, y2] = P(xMax, o.p);
+      el('line', { x1, y1, x2, y2, stroke: lineCols[0][o.gi], 'stroke-width': 5, 'stroke-linecap': 'round', pathLength: 1, class: 'draw', style: `animation-delay:${delay}ms` }); delay += 90; });
+    xs.forEach(o => { const [x1, y1] = P(o.p, yMin), [x2, y2] = P(o.p, yMax);
+      el('line', { x1, y1, x2, y2, stroke: lineCols[1][o.gi], 'stroke-width': 5, 'stroke-linecap': 'round', pathLength: 1, class: 'draw', style: `animation-delay:${delay}ms` }); delay += 90; });
+    // crossings, grouped by place value
+    const PLACE = this.two ? { 2: ['#7050D0', 100], 1: ['#18A06A', 10], 0: ['#E0A820', 1] } : { 0: ['#2D2D2D', 1] };
+    const clusters = {};
+    delay += 300;
+    ys.forEach(oy => xs.forEach(ox => {
+      const place = this.two ? (1 - oy.gi) + (1 - ox.gi) : 0;
+      const [x, y] = P(ox.p, oy.p);
+      (clusters[place] = clusters[place] || []).push([x, y]);
+      el('circle', { cx: x, cy: y, r: Math.max(4, Math.min(9, s * 0.2)), fill: PLACE[place][0], stroke: 'white', 'stroke-width': 2,
+                     class: 'pop', style: `animation-delay:${delay}ms` });
+      delay += 18;
+    }));
+    // cluster counts along the bottom, under each cluster
+    const places = Object.keys(clusters).map(Number).sort((a, b) => b - a);
+    places.forEach(pl => {
+      const pts = clusters[pl], cx = pts.reduce((t, p) => t + p[0], 0) / pts.length;
+      const g = el('g', { class: 'pop', style: `animation-delay:${delay + 200}ms` });
+      el('rect', { x: cx - 30, y: 362, width: 60, height: 46, rx: 14, fill: PLACE[pl][0] }, g);
+      txt(cx, 385, pts.length, { fill: 'white', 'font-size': 26 }, g);
+    });
+    if (this.two) {
+      const terms = places.map(pl => `<span style="color:${PLACE[pl][0]}">${clusters[pl].length}${pl ? '·' + PLACE[pl][1] : ''}</span>`);
+      eq(`${cA(A)} ${X} ${cB(B)} ${EQ} ${terms.join(` ${PLUS} `)} ${EQ} ${R(A * B)}`);
+    } else {
+      eq(`${cA(A)} ${X} ${cB(B)} ${EQ} ${R(A * B)}`);
+    }
+  },
+  tools() {
+    tool('1 digit', () => { this.setTwo(false); }, !this.two);
+    tool('2 digits', () => { this.setTwo(true); }, this.two);
+    tool('▶', () => this.draw(), false, 'draw again');
+  },
+  setTwo(v) {
+    if (v === this.two) return;
+    this.two = v;
+    if (v) { A = 12; B = 23; } else { A = 3; B = 4; }
+    showNums(); refreshTools(); this.draw();
+  },
+};
+
+// 7. similar triangles ────────────────────────────────────
+MODES.triangles = {
+  name: 'Triangles',
+  icon: `<path d="M4 34 L36 34 L36 6 Z" fill="#E9E2FF" stroke="#A78BFA" stroke-width="2"/><path d="M4 34 L16 34 L16 23.5 Z" fill="#4ECDC4"/>`,
+  a: [0.5, 4], b: [0.5, 4], aStep: 0.5, bStep: 0.5,
+  draw(scaleT = null) {
+    clear();
+    const ang = 38 * Math.PI / 180, dx = Math.cos(ang), dy = -Math.sin(ang);
+    const O = [40, 362];
+    const u = this.u = drag && this.u ? this.u
+      : Math.min(120, 520 / Math.max(B, 1, A * B * dx) , 325 / (Math.max(A * B, A, 1) * Math.sin(ang)));
+    const on1 = v => [O[0] + v * u, O[1]], on2 = v => [O[0] + v * u * dx, O[1] + v * u * dy];
+    const far = 30;
+    el('line', { x1: O[0], y1: O[1], x2: O[0] + 560, y2: O[1], stroke: '#CCC', 'stroke-width': 3 });
+    el('line', { x1: O[0], y1: O[1], x2: on2(far)[0], y2: on2(far)[1], stroke: '#CCC', 'stroke-width': 3 });
+    // integer ticks on both rays
+    for (let t = 1; t * u < 560; t++) {
+      const [x, y] = on1(t); el('line', { x1: x, y1: y - 6, x2: x, y2: y + 6, stroke: '#CCC', 'stroke-width': 2 });
+      const [x2, y2] = on2(t); if (y2 > 0) el('line', { x1: x2 - 6 * dy, y1: y2 + 6 * dx, x2: x2 + 6 * dy, y2: y2 - 6 * dx, stroke: '#CCC', 'stroke-width': 2 });
+    }
+    const p1 = on1(1), pb = on1(B), qa = on2(A), qab = on2(A * B);
+    const poly = pts => pts.map(p => p.join(',')).join(' ');
+    el('polygon', { points: poly([O, pb, qab]), fill: PAL[3], 'fill-opacity': 0.18, stroke: PAL[3], 'stroke-width': 2 });
+    el('polygon', { points: poly([O, p1, qa]), fill: PAL[2], 'fill-opacity': 0.55 });
+    el('line', { x1: p1[0], y1: p1[1], x2: qa[0], y2: qa[1], stroke: '#2FAF9F', 'stroke-width': 4 });
+    el('line', { x1: pb[0], y1: pb[1], x2: qab[0], y2: qab[1], stroke: '#7050D0', 'stroke-width': 4, 'stroke-dasharray': '10 7' });
+    if (scaleT !== null) {
+      const ps = on1(scaleT), qs = on2(A * scaleT);
+      el('line', { x1: ps[0], y1: ps[1], x2: qs[0], y2: qs[1], stroke: '#F97316', 'stroke-width': 5 });
+      el('circle', { cx: qs[0], cy: qs[1], r: 7, fill: '#F97316' });
+    }
+    // labels
+    txt(p1[0], p1[1] + 30, 1, { fill: '#2FAF9F', 'font-size': 22 });
+    txt(pb[0], pb[1] + 34, fmt(B), { fill: COL_B, 'font-size': 26 });
+    txt(qa[0] - 22, qa[1] - 14, fmt(A), { fill: COL_A, 'font-size': 26 });
+    txt(qab[0] - 30, qab[1] - 18, fmt(A * B), { fill: '#7050D0', 'font-size': 28 });
+    el('circle', { cx: O[0], cy: O[1], r: 6, fill: '#2D2D2D' });
+    el('circle', { cx: p1[0], cy: p1[1], r: 7, fill: '#2FAF9F' });
+    el('circle', { cx: qab[0], cy: qab[1], r: 8, fill: '#7050D0' });
+    knob(pb[0], pb[1], COL_B, p => { const v = clamp(Math.round((p.x - O[0]) / u * 10) / 10, 0.5, 4); if (v !== B) { B = v; showNums(); this.draw(); } }, 14);
+    knob(qa[0], qa[1], COL_A, p => {
+      const v = clamp(Math.round(((p.x - O[0]) * dx + (p.y - O[1]) * dy) / u * 10) / 10, 0.5, 4);
+      if (v !== A) { A = v; showNums(); this.draw(); }
+    }, 14);
+    eq(`${cA(fmt(A))} ${X} ${cB(fmt(B))} ${EQ} ${R(fmt(A * B))}`);
+  },
+  play() {
+    const start = performance.now(), dur = 1600;
+    const step = now => {
+      const s = Math.min(1, (now - start) / dur), e = s * s * (3 - 2 * s);
+      this.draw(1 + (B - 1) * e);
+      if (s < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  },
+  tools() { tool('▶', () => this.play(), false, 'slide the line from 1 to b'); },
+};
+
+// 8. times-table circle ───────────────────────────────────
+MODES.circle = {
+  name: 'Circle',
+  icon: `<circle cx="20" cy="20" r="16" fill="none" stroke="#DDD" stroke-width="2"/><path d="M4 20 C 8 2, 26 0, 34 12 M4 20 C 8 38, 26 40, 34 28 M4 20 L20 4 M4 20 L20 36" fill="none" stroke="#F472B6" stroke-width="2"/>`,
+  pickers: false,
+  n: 60, m: 2, playing: false,
+  draw() {
+    clear();
+    const n = this.n, m = this.m, cx = 300, cy = 210, r = 195;
+    const pt = i => { const t = Math.PI + 2 * Math.PI * i / n; return [cx + r * Math.cos(t), cy - r * Math.sin(t)]; };
+    el('circle', { cx, cy, r, fill: 'none', stroke: '#EEE', 'stroke-width': 3 });
+    const g = el('g', { 'stroke-width': n > 120 ? 1 : 1.6, 'stroke-opacity': 0.85, fill: 'none' });
+    for (let i = 0; i < n; i++) {
+      const [x1, y1] = pt(i), [x2, y2] = pt(i * m);
+      el('line', { x1, y1, x2, y2, stroke: `hsl(${330 + i / n * 200},80%,58%)` }, g);
+    }
+    if (n <= 60) for (let i = 0; i < n; i++) { const [x, y] = pt(i); el('circle', { cx: x, cy: y, r: 3, fill: '#999' }); }
+    // highlight one example: i → i×m
+    const ex = n <= 60 ? 3 : 0;
+    if (ex) {
+      const [x1, y1] = pt(ex), [x2, y2] = pt(ex * m);
+      el('line', { x1, y1, x2, y2, stroke: '#2D2D2D', 'stroke-width': 3 });
+      el('circle', { cx: x1, cy: y1, r: 7, fill: COL_A });
+      el('circle', { cx: x2, cy: y2, r: 7, fill: COL_B });
+    }
+    eq(ex ? `${cA(ex)} → ${cA(ex)} ${X} ${R(fmt(m))} ${EQ} ${cB(fmt(ex * m))}` : `${X} ${R(m.toFixed(2))}`);
+  },
+  tools() {
+    this.sn = slider('●', 10, 200, 1, this.n, v => { this.n = v; this.draw(); });
+    this.sm = slider('×', 2, 40, 0.01, this.m, v => { this.m = v; this.draw(); }, v => (+v).toFixed(2));
+    [2, 3, 4, 5].forEach(v => tool('×' + v, () => { this.stop(); this.m = v; this.sm.set(v); this.draw(); }));
+    this.pb = tool(this.playing ? '⏸' : '▶', () => this.playing ? this.stop() : this.play());
+  },
+  play() {
+    this.playing = true; this.pb.textContent = '⏸';
+    if (this.n < 100) { this.n = 200; this.sn.set(200); }
+    const loop = () => {
+      if (!this.playing) return;
+      this.m = this.m >= 40 ? 2 : Math.round((this.m + 0.01) * 100) / 100;
+      this.sm.set(this.m);
+      this.draw();
+      this.loopRaf = requestAnimationFrame(loop);
+    };
+    this.loopRaf = requestAnimationFrame(loop);
+  },
+  stop() { this.playing = false; cancelAnimationFrame(this.loopRaf); if (this.pb) this.pb.textContent = '▶'; },
+  exit() { this.stop(); },
+};
+
+// 9. factor dots (after Brent Yorgey) ─────────────────────
+function primeFactors(n) { const f = []; for (let p = 2; p * p <= n; p++) while (n % p === 0) { f.push(p); n /= p; } if (n > 1) f.push(n); return f; }
+MODES.dots = {
+  name: 'Dots',
+  icon: `${[0,1,2].map(i => { const a = -Math.PI/2 + i*2*Math.PI/3, x = 20 + 11*Math.cos(a), y = 21 + 11*Math.sin(a);
+           return [0,1,2,3].map(j => { const b = j*Math.PI/2 + Math.PI/4; return `<circle cx="${(x + 4.5*Math.cos(b)).toFixed(1)}" cy="${(y + 4.5*Math.sin(b)).toFixed(1)}" r="2.4" fill="${['#FF6B6B','#4ECDC4','#A78BFA'][i]}"/>`; }).join(''); }).join('')}`,
+  a: [1, 12], b: [1, 12],
+  primes: false,
+  layout(list, depth = 0) {
+    if (!list.length) return { r: 1, pts: [[0, 0, 0]] };
+    const [p, ...rest] = list, sub = this.layout(rest, depth + 1);
+    if (p === 1) return sub;
+    const R = p === 2 ? sub.r * 1.25 : sub.r * 1.25 / Math.sin(Math.PI / p);
+    const a0 = p === 2 ? (depth % 2 ? Math.PI / 2 : 0) : -Math.PI / 2;
+    const pts = [];
+    for (let i = 0; i < p; i++) {
+      const a = a0 + i * 2 * Math.PI / p, ox = R * Math.cos(a), oy = R * Math.sin(a);
+      sub.pts.forEach(([x, y]) => pts.push([x + ox, y + oy, i]));
+    }
+    return { r: R + sub.r, pts };
+  },
+  draw() {
+    clear();
+    const list = this.primes ? primeFactors(A * B).sort((x, y) => y - x) : [A, B];
+    // draw pairs of 2s as squares of 4, like Yorgey's diagrams
+    const shape = this.primes ? list.filter(v => v !== 2) : list;
+    if (this.primes) { const twos = list.filter(v => v === 2).length;
+      for (let i = 0; i < Math.floor(twos / 2); i++) shape.push(4);
+      if (twos % 2) shape.push(2); }
+    const L = this.layout(shape.filter(v => v > 1));
+    const sc = Math.min(195 / L.r, 40);
+    L.pts.forEach(([x, y, g], i) => el('circle', { cx: 300 + x * sc, cy: 210 + y * sc, r: Math.max(2.5, Math.min(sc * 0.9, 24)),
+      fill: PAL[g % 10], class: 'pop', style: `animation-delay:${i * 8}ms` }));
+    const f = list.filter(v => v > 1);
+    eq(this.primes && f.length
+      ? `${f.map((p, i) => `<span style="color:${i ? '#888' : DARK[0]}">${p}</span>`).join(` ${X} `)} ${EQ} ${R(A * B)}`
+      : `${cA(A)} ${X} ${cB(B)} ${EQ} ${R(A * B)}`);
+  },
+  tools() {
+    tool(`a × b`, () => { this.primes = false; refreshTools(); this.draw(); }, !this.primes);
+    tool('primes', () => { this.primes = true; refreshTools(); this.draw(); }, this.primes);
+  },
+};
+
+// 10. the times table ─────────────────────────────────────
+MODES.table = {
+  name: 'Table',
+  icon: `<g>${[0,1,2,3].map(r => [0,1,2,3].map(c => `<rect x="${4+c*8.2}" y="${4+r*8.2}" width="7" height="7" rx="1.5" fill="${r<2&&c<3?'#4ECDC4':'#EEE'}"/>`).join('')).join('')}</g>`,
+  a: [1, 12], b: [1, 12],
+  same: false, squares: false,
+  draw() {
+    clear();
+    const N = 12, cs = 30.5, x0 = 300 - (N + 1) * cs / 2, y0 = 12;
+    const prod = A * B;
+    for (let i = 1; i <= N; i++) {
+      txt(x0 + (i + 0.5) * cs, y0 + cs / 2, i, { fill: i === B ? COL_B : '#BBB', 'font-size': 16 });
+      txt(x0 + cs / 2, y0 + (i + 0.5) * cs, i, { fill: i === A ? COL_A : '#BBB', 'font-size': 16 });
+    }
+    const hover = el('rect', { x: x0 + cs, y: y0 + cs, width: 0, height: 0, fill: 'none', stroke: '#F97316', 'stroke-width': 3, rx: 4, 'pointer-events': 'none' });
+    for (let r = 1; r <= N; r++) for (let c = 1; c <= N; c++) {
+      const inside = r <= A && c <= B, v = r * c;
+      let fill = inside ? (r === A && c === B ? '#2FAF9F' : '#C9F1EE') : '#F7F2EA';
+      if (this.squares && r === c && !inside) fill = '#FFE9A8';
+      const g = el('g', { class: 'cell-hit' });
+      el('rect', { x: x0 + c * cs + 1, y: y0 + r * cs + 1, width: cs - 2, height: cs - 2, rx: 5, fill,
+                   stroke: this.same && v === prod ? '#F97316' : 'none', 'stroke-width': 3 }, g);
+      txt(x0 + (c + 0.5) * cs, y0 + (r + 0.5) * cs, v,
+          { 'font-size': v >= 100 ? 11 : 13, fill: r === A && c === B ? 'white' : inside ? '#2A8F88' : '#B5A894' }, g);
+      g.addEventListener('pointerenter', () => { hover.setAttribute('width', c * cs); hover.setAttribute('height', r * cs); });
+      g.addEventListener('pointerleave', () => { hover.setAttribute('width', 0); hover.setAttribute('height', 0); });
+      g.addEventListener('click', () => { A = r; B = c; showNums(); this.draw(); });
+    }
+    stage.appendChild(hover);
+    if (this.same) {
+      const ways = [];
+      for (let r = 1; r <= N; r++) if (prod % r === 0 && prod / r <= N) ways.push(`${r}×${prod / r}`);
+      eq(`${R(prod)} ${EQ} ${ways.map(w => `<span style="color:#F97316">${w}</span>`).join(' · ')}`);
+    } else {
+      eq(`${cA(A)} ${X} ${cB(B)} ${EQ} ${R(prod)}`);
+    }
+  },
+  tools() {
+    tool('◎ same', () => { this.same = !this.same; refreshTools(); this.draw(); }, this.same, 'every way to make this answer');
+    tool('◩ squares', () => { this.squares = !this.squares; refreshTools(); this.draw(); }, this.squares, 'square numbers');
+  },
+};
+
+// ── pickers ───────────────────────────────────────────────
+const range = which => mode[which] || [1, 10];
+function showNums() {
+  document.getElementById('dispA').textContent = fmt(A);
+  document.getElementById('dispB').textContent = fmt(B);
+  document.getElementById('ans').textContent = fmt(A * B);
+}
+function change(which, delta) {
+  const rg = range(which), stp = mode[which + 'Step'] || 1;
+  const cur = which === 'a' ? A : B;
+  const next = mode.step ? mode.step(cur, delta, rg) : clamp(Math.round((cur + delta * stp) / stp) * stp, rg[0], rg[1]);
+  if (next === cur) return;
+  if (which === 'a') A = next; else B = next;
+  const d = document.getElementById(which === 'a' ? 'dispA' : 'dispB');
+  d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump');
+  setTimeout(() => d.classList.remove('bump'), 130);
+  showNums();
+  if (mode.onNums) mode.onNums();
+  mode.draw();
+}
+let holdTimer = null, holdInterval = null;
+function attachHold(id, which, delta) {
+  const btn = document.getElementById(id);
+  const stop = () => { clearTimeout(holdTimer); clearInterval(holdInterval); };
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault(); stop();
+    btn.setPointerCapture(e.pointerId);
+    change(which, delta);
+    holdTimer = setTimeout(() => { holdInterval = setInterval(() => change(which, delta), 220); }, 380);
+  });
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointercancel', stop);
+  btn.addEventListener('lostpointercapture', stop);
+}
+attachHold('btnAminus', 'a', -1); attachHold('btnAplus', 'a', 1);
+attachHold('btnBminus', 'b', -1); attachHold('btnBplus', 'b', 1);
+
+// ── mode switching + menu ─────────────────────────────────
+const menu = document.getElementById('menu'), menuBtn = document.getElementById('menuBtn');
+const icon = m => `<svg viewBox="0 0 40 40">${MODES[m].icon}</svg>`;
+Object.keys(MODES).forEach(id => {
+  const b = document.createElement('button');
+  b.className = 'tile'; b.dataset.mode = id;
+  b.innerHTML = icon(id) + `<span>${MODES[id].name}</span>`;
+  b.addEventListener('click', () => { setMode(id); toggleMenu(false); });
+  menu.appendChild(b);
+});
+function toggleMenu(open = !menu.classList.contains('open')) {
+  menu.classList.toggle('open', open);
+  menuBtn.classList.toggle('open', open);
+}
+menuBtn.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
+document.addEventListener('click', e => { if (!menu.contains(e.target)) toggleMenu(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });
+
+function refreshTools() { toolsEl.innerHTML = ''; if (mode.tools) mode.tools(); }
+
+function setMode(id) {
+  if (!MODES[id]) id = 'groups';
+  if (mode && mode.exit) mode.exit();
+  mode = MODES[id];
+  if (mode.enter) mode.enter();
+  // fit the shared numbers into this view's range
+  const fit = (v, which) => {
+    const [lo, hi] = range(which), stp = mode[which + 'Step'] || 1;
+    v = clamp(Math.round(v / stp) * stp, lo, hi);
+    if (mode.step) v = mode.step(v, 0, [lo, hi]);
+    return v;
+  };
+  A = fit(A, 'a'); B = fit(B, 'b');
+  document.getElementById('top').classList.toggle('hide-pickers', mode.pickers === false);
+  document.getElementById('modePill').innerHTML = icon(id) + mode.name;
+  document.querySelectorAll('.tile').forEach(t => t.classList.toggle('active', t.dataset.mode === id));
+  document.getElementById('ans').style.display = mode.pickers === false ? 'none' : '';
+  document.querySelector('.sym-eq').style.display = mode.pickers === false ? 'none' : '';
+  showNums();
+  refreshTools();
+  mode.draw();
+  history.replaceState(null, '', '#' + id);
+  document.title = `${mode.name} · Multiplication 2.0`;
+}
+window.addEventListener('hashchange', () => setMode(location.hash.slice(1)));
+setMode(location.hash.slice(1) || 'groups');
+</script>
+</body>
+</html>
